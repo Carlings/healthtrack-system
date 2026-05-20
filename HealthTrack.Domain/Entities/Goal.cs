@@ -1,0 +1,15 @@
+﻿namespace HealthTrack.Domain.Entities
+{
+    public class Goal
+    {
+        public int Id { get; set; }
+
+        public int UserId { get; set; }
+        public User User { get; set; } = null!;
+
+        public float? TargetWeight { get; set; }
+        public int? TargetSteps { get; set; }
+
+        public DateTime CreatedAt { get; set; }
+    }
+}
