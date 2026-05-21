@@ -1,5 +1,6 @@
 ﻿using HealthTrack.Application.Common.Exceptions;
 using HealthTrack.Application.Common.Interfaces.Identity;
+using HealthTrack.Application.Common.Interfaces.Repositories;
 using HealthTrack.Application.Identity.Users.DTOs;
 using HealthTrack.Domain.Entities;
 using MediatR;

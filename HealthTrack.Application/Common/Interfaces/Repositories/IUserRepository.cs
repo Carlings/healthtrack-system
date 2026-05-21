@@ -1,6 +1,6 @@
 ﻿using HealthTrack.Domain.Entities;
 
-namespace HealthTrack.Application.Common.Interfaces.Identity
+namespace HealthTrack.Application.Common.Interfaces.Repositories
 {
     public interface IUserRepository
     {

@@ -1,4 +1,4 @@
-﻿using HealthTrack.Application.Common.Interfaces.Identity;
+﻿using HealthTrack.Application.Common.Interfaces.Repositories;
 using HealthTrack.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
