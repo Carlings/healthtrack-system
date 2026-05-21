@@ -1,8 +1,8 @@
-﻿using HealthTrack.Application.Auth.DTOs;
-using HealthTrack.Application.Auth.Interfaces;
+﻿using HealthTrack.Application.Identity.Auth.DTOs;
+using HealthTrack.Application.Identity.Auth.Interfaces;
 using MediatR;
 
-namespace HealthTrack.Application.Auth.Commands
+namespace HealthTrack.Application.Identity.Auth.Commands
 {
     public record LoginCommand(
     string Email,

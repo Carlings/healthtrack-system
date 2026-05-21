@@ -1,10 +1,12 @@
 ﻿using HealthTrack.Api.Common;
-using HealthTrack.Application.Auth.Commands;
+using HealthTrack.Application.Identity.Auth.Commands;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HealthTrack.Api.Controllers;
 
 [Route("api/auth")]
+[AllowAnonymous]
 public class AuthController : BaseApiController
 {
     [HttpPost("register")]

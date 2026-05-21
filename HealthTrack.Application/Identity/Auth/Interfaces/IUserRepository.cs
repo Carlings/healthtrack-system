@@ -1,6 +1,6 @@
 ﻿using HealthTrack.Domain.Entities;
 
-namespace HealthTrack.Application.Auth.Interfaces
+namespace HealthTrack.Application.Identity.Auth.Interfaces
 {
     public interface IUserRepository
     {
@@ -9,5 +9,7 @@ namespace HealthTrack.Application.Auth.Interfaces
         Task AddUserAsync(User user, CancellationToken cancellationToken);
 
         Task SaveChangesAsync(CancellationToken cancellationToken);
+
+        Task<User?> GetByIdAsync(int id, CancellationToken cancellationToken);
     }
 }

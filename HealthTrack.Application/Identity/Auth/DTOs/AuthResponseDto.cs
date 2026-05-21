@@ -1,4 +1,4 @@
-﻿namespace HealthTrack.Application.Auth.DTOs
+﻿namespace HealthTrack.Application.Identity.Auth.DTOs
 {
     public record AuthResponseDto(
         string AccessToken,

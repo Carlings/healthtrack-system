@@ -1,4 +1,4 @@
-﻿using HealthTrack.Application.Auth.Interfaces;
+﻿using HealthTrack.Application.Identity.Auth.Interfaces;
 using HealthTrack.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -29,5 +29,12 @@ public class UserRepository : IUserRepository
     public async Task SaveChangesAsync(CancellationToken cancellationToken)
     {
         await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task<User?> GetByIdAsync(int id, CancellationToken cancellationToken)
+    {
+        return await _context.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == id, cancellationToken);
     }
 }

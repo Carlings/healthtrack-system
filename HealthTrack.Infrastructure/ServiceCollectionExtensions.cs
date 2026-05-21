@@ -1,4 +1,4 @@
-﻿using HealthTrack.Application.Auth.Interfaces;
+﻿using HealthTrack.Application.Identity.Auth.Interfaces;
 using HealthTrack.Infrastructure.Persistence;
 using HealthTrack.Infrastructure.Persistence.Repositories;
 using HealthTrack.Infrastructure.Services;
@@ -8,7 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace HealthTrack.Infrastructure
 {
-    public static class InfrastructureServiceCollectionExtensions
+    public static class ServiceCollectionExtensions
     {
         public static IServiceCollection AddInfrastructure(
         this IServiceCollection services,
