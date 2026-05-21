@@ -1,4 +1,4 @@
-﻿namespace HealthTrack.Application.Common.Interfaces
+﻿namespace HealthTrack.Application.Common.Interfaces.Identity
 {
     public interface ICurrentUserService
     {

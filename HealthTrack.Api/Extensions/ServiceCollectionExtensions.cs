@@ -2,7 +2,7 @@
 using HealthTrack.Api.Infrastructure;
 using HealthTrack.Api.Services;
 using HealthTrack.Application.Behaviors;
-using HealthTrack.Application.Common.Interfaces;
+using HealthTrack.Application.Common.Interfaces.Identity;
 using MediatR;
 
 namespace HealthTrack.Api.Extensions;
@@ -18,7 +18,7 @@ public static class ServiceCollectionExtensions
         services.AddProblemDetails();
         services.AddExceptionHandler<GlobalExceptionHandler>();
 
-        services.AddValidatorsFromAssembly(typeof(HealthTrack.Application.Common.Interfaces.ICurrentUserService).Assembly);
+        services.AddValidatorsFromAssembly(typeof(ICurrentUserService).Assembly);
 
         services.AddMediatR(cfg =>
         {

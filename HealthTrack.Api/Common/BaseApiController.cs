@@ -1,4 +1,4 @@
-﻿using HealthTrack.Application.Common.Interfaces;
+﻿using HealthTrack.Application.Common.Interfaces.Identity;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

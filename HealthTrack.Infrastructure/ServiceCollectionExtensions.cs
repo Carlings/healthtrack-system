@@ -1,4 +1,4 @@
-﻿using HealthTrack.Application.Common.Interfaces;
+﻿using HealthTrack.Application.Common.Interfaces.Identity;
 using HealthTrack.Infrastructure.Persistence;
 using HealthTrack.Infrastructure.Persistence.Repositories;
 using HealthTrack.Infrastructure.Services;

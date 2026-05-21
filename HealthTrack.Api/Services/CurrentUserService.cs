@@ -1,6 +1,6 @@
-﻿using HealthTrack.Application.Common.Interfaces;
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using Microsoft.IdentityModel.JsonWebTokens;
+using HealthTrack.Application.Common.Interfaces.Identity;
 
 
 namespace HealthTrack.Api.Services

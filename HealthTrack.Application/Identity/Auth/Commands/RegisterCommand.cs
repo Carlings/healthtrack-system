@@ -1,4 +1,4 @@
-﻿using HealthTrack.Application.Common.Interfaces;
+﻿using HealthTrack.Application.Common.Interfaces.Identity;
 using HealthTrack.Application.Identity.Auth.DTOs;
 using HealthTrack.Domain.Entities;
 using MediatR;
