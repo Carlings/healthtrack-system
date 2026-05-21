@@ -1,5 +1,5 @@
 ﻿using HealthTrack.Api.Common;
-using HealthTrack.Application.Users.Queries;
+using HealthTrack.Application.Identity.Users.Queries;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HealthTrack.Api.Controllers
