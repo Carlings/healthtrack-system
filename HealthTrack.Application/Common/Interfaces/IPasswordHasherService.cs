@@ -1,6 +1,6 @@
 ﻿using HealthTrack.Domain.Entities;
 
-namespace HealthTrack.Application.Identity.Auth.Interfaces
+namespace HealthTrack.Application.Common.Interfaces
 {
     public interface IPasswordHasherService
     {

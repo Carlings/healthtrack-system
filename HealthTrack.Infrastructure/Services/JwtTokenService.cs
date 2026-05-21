@@ -1,7 +1,7 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using HealthTrack.Application.Identity.Auth.Interfaces;
+using HealthTrack.Application.Common.Interfaces;
 using HealthTrack.Domain.Entities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;

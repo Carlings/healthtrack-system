@@ -1,5 +1,5 @@
-﻿using HealthTrack.Application.Identity.Auth.DTOs;
-using HealthTrack.Application.Identity.Auth.Interfaces;
+﻿using HealthTrack.Application.Common.Interfaces;
+using HealthTrack.Application.Identity.Auth.DTOs;
 using MediatR;
 
 namespace HealthTrack.Application.Identity.Auth.Commands
