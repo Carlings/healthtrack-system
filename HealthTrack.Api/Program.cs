@@ -1,11 +1,12 @@
-using System.Text;
 using HealthTrack.Api.Extensions;
+using HealthTrack.Application.Common.Interfaces.Identity;
 using HealthTrack.Infrastructure;
 using HealthTrack.Infrastructure.Persistence;
 using HealthTrack.Infrastructure.Persistence.Seeding;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.Text;
 
 namespace HealthTrack.Api
 {
@@ -96,7 +97,13 @@ namespace HealthTrack.Api
             using (var scope = app.Services.CreateScope())
             {
                 var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-                await AppDbSeeder.SeedAsync(db);
+
+                var passwordHasherService =
+                    scope.ServiceProvider.GetRequiredService<IPasswordHasherService>();
+
+                await AppDbSeeder.SeedAsync(
+                    db,
+                    passwordHasherService);
             }
 
             await app.RunAsync();
