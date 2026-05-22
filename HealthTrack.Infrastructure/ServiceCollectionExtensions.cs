@@ -1,7 +1,6 @@
 ﻿using HealthTrack.Application.Common.Interfaces.Identity;
 using HealthTrack.Application.Common.Interfaces.Repositories;
 using HealthTrack.Infrastructure.Persistence;
-using HealthTrack.Infrastructure.Persistence.Repositories;
 using HealthTrack.Infrastructure.Repositories;
 using HealthTrack.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;

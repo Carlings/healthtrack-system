@@ -1,4 +1,5 @@
 ﻿using HealthTrack.Api.Common;
+using HealthTrack.Application.Identity.Users.Commands;
 using HealthTrack.Application.Identity.Users.Queries;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,6 +12,18 @@ namespace HealthTrack.Api.Controllers
         public async Task<IActionResult> GetMe(CancellationToken cancellationToken)
         {
             var result = await Mediator.Send(new GetCurrentUserQuery(), cancellationToken);
+            return Ok(result);
+        }
+
+        [HttpPut("me")]
+        public async Task<IActionResult> UpdateCurrentUserAsync(
+        [FromBody] UpdateCurrentUserCommand command,
+        CancellationToken cancellationToken)
+        {
+            var result = await Mediator.Send(
+                command,
+                cancellationToken);
+
             return Ok(result);
         }
     }

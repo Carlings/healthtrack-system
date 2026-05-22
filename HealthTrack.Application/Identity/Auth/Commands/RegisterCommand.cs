@@ -53,7 +53,7 @@ public class RegisterCommandHandler
             user,
             request.Password);
 
-        await _authRepository.AddUserAsync(
+        await _authRepository.AddAsync(
             user,
             cancellationToken);
 

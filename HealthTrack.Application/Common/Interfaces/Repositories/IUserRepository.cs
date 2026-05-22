@@ -6,10 +6,12 @@ namespace HealthTrack.Application.Common.Interfaces.Repositories
     {
         Task<User?> GetByEmailAsync(string email, CancellationToken cancellationToken);
 
-        Task AddUserAsync(User user, CancellationToken cancellationToken);
+        Task<User?> GetByIdAsync(int id, CancellationToken cancellationToken);
+
+        Task<User?> GetTrackedByIdAsync(int id, CancellationToken cancellationToken);
+
+        Task AddAsync(User user, CancellationToken cancellationToken);
 
         Task SaveChangesAsync(CancellationToken cancellationToken);
-
-        Task<User?> GetByIdAsync(int id, CancellationToken cancellationToken);
     }
 }
