@@ -2,6 +2,7 @@
 using HealthTrack.Application.Common.Interfaces.Repositories;
 using HealthTrack.Infrastructure.Persistence;
 using HealthTrack.Infrastructure.Persistence.Repositories;
+using HealthTrack.Infrastructure.Repositories;
 using HealthTrack.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -23,6 +24,7 @@ namespace HealthTrack.Infrastructure
             services.AddScoped<IPasswordHasherService, PasswordHasherService>();
 
             services.AddScoped<IUserRepository, UserRepository>();
+            services.AddScoped<IHealthRecordRepository, HealthRecordRepository>();
 
             return services;
         }

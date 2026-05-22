@@ -1,4 +1,5 @@
-﻿using HealthTrack.Application.Common.Interfaces.Identity;
+﻿using HealthTrack.Application.Common.Exceptions;
+using HealthTrack.Application.Common.Interfaces.Identity;
 using HealthTrack.Application.Common.Interfaces.Repositories;
 using HealthTrack.Application.Identity.Auth.DTOs;
 using HealthTrack.Domain.Entities;
@@ -38,7 +39,7 @@ public class RegisterCommandHandler
 
         if (existingUser is not null)
         {
-            throw new InvalidOperationException("User with this email already exists.");
+            throw new ConflictException("User with this email already exists.");
         }
 
         var user = new User

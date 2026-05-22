@@ -48,6 +48,15 @@ namespace HealthTrack.Api.Infrastructure
                         cancellationToken);
                     return true;
 
+                case ConflictException conflictException:
+                    await WriteProblemDetailsAsync(
+                        httpContext,
+                        HttpStatusCode.Conflict,
+                        "Conflict",
+                        conflictException.Message,
+                        cancellationToken);
+                    return true;
+
                 default:
                     await WriteProblemDetailsAsync(
                         httpContext,

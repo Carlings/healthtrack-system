@@ -36,7 +36,7 @@ namespace HealthTrack.Application.Identity.Auth.Commands
 
             if (user is null)
             {
-                throw new InvalidOperationException(
+                throw new UnauthorizedAccessException(
                     "Invalid credentials.");
             }
 
@@ -47,7 +47,7 @@ namespace HealthTrack.Application.Identity.Auth.Commands
 
             if (!isPasswordValid)
             {
-                throw new InvalidOperationException(
+                throw new UnauthorizedAccessException(
                     "Invalid credentials.");
             }
 
