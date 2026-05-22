@@ -1,0 +1,41 @@
+﻿using HealthTrack.Application.Common.Interfaces.Identity;
+using HealthTrack.Application.Common.Interfaces.Repositories;
+using HealthTrack.Application.Health.Notifications.DTOs;
+using MediatR;
+
+namespace HealthTrack.Application.Health.Notifications.Queries;
+
+public sealed record GetNotificationsQuery : IRequest<IReadOnlyList<NotificationDto>>;
+
+public sealed class GetNotificationsQueryHandler
+    : IRequestHandler<GetNotificationsQuery, IReadOnlyList<NotificationDto>>
+{
+    private readonly INotificationRepository _repository;
+    private readonly ICurrentUserService _currentUser;
+
+    public GetNotificationsQueryHandler(
+        INotificationRepository repository,
+        ICurrentUserService currentUser)
+    {
+        _repository = repository;
+        _currentUser = currentUser;
+    }
+
+    public async Task<IReadOnlyList<NotificationDto>> Handle(
+        GetNotificationsQuery request,
+        CancellationToken cancellationToken)
+    {
+        var notifications = await _repository.GetAllByUserIdAsync(
+            _currentUser.UserId,
+            cancellationToken);
+
+        return [.. notifications
+            .OrderByDescending(x => x.CreatedAt)
+            .Select(x => new NotificationDto(
+                x.Id,
+                x.Message,
+                x.Type.ToString(),
+                x.IsRead,
+                x.CreatedAt))];
+    }
+}
