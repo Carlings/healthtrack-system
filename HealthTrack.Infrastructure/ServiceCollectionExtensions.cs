@@ -24,6 +24,7 @@ namespace HealthTrack.Infrastructure
 
             services.AddScoped<IUserRepository, UserRepository>();
             services.AddScoped<IHealthRecordRepository, HealthRecordRepository>();
+            services.AddScoped<IGoalRepository, GoalRepository>();
 
             return services;
         }
