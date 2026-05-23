@@ -114,6 +114,11 @@ public sealed class HealthEventsPublisher : IHealthEventsPublisher
             return false;
         }
 
+        if (latestSame.CreatedAt > currentMomentUtc)
+        {
+            return false;
+        }
+
         return currentMomentUtc - latestSame.CreatedAt < DuplicateCooldown;
     }
 }
