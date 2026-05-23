@@ -9,7 +9,7 @@ namespace HealthTrack.Api.Controllers;
 public sealed class UsersController : BaseApiController
 {
     [HttpGet("me")]
-    public async Task<IActionResult> GetMe(CancellationToken cancellationToken)
+    public async Task<IActionResult> GetMeAsync(CancellationToken cancellationToken)
     {
         var result = await Mediator.Send(new GetCurrentUserQuery(), cancellationToken);
         return Ok(result);
