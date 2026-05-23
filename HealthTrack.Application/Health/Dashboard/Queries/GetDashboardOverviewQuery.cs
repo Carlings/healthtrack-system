@@ -105,7 +105,7 @@ public sealed class GetDashboardOverviewQueryHandler
         var currentGoal = goals.FirstOrDefault();
         var goalDto = currentGoal is null
             ? null
-            : BuildGoalDto(currentGoal, trendWindow, latestRecord);
+            : BuildGoalDto(currentGoal, healthRecords, latestRecord);
 
         return new DashboardOverviewDto(
             stats,
@@ -119,25 +119,32 @@ public sealed class GetDashboardOverviewQueryHandler
 
     private static DashboardGoalDto BuildGoalDto(
         Goal goal,
-        IReadOnlyList<HealthRecord> trendWindow,
+        IReadOnlyList<HealthRecord> healthRecords,
         HealthRecord? latestRecord)
     {
-        float? weightProgressPercent = null;
         float? currentWeight = latestRecord?.Weight;
         float? weightGap = null;
+        float? weightProgressRaw = null;
+        float? weightProgressClamped = null;
+
+        var baselineRecord = healthRecords
+            .FirstOrDefault(x => x.RecordedAt <= goal.CreatedAt);
 
         if (goal.TargetWeight.HasValue && latestRecord is not null)
         {
             currentWeight = latestRecord.Weight;
             weightGap = latestRecord.Weight - goal.TargetWeight.Value;
 
-            var baselineRecord = trendWindow.FirstOrDefault();
             if (baselineRecord is not null)
             {
-                weightProgressPercent = CalculateWeightProgress(
-                    baselineRecord.Weight,
-                    latestRecord.Weight,
-                    goal.TargetWeight.Value);
+                weightProgressRaw = weightProgressRaw = MathF.Round(
+                    CalculateWeightProgressRaw(
+                        baselineRecord.Weight,
+                        latestRecord.Weight,
+                        goal.TargetWeight.Value),
+                    2);
+
+                weightProgressClamped = Math.Clamp(weightProgressRaw.Value, 0f, 100f);
             }
         }
 
@@ -150,9 +157,11 @@ public sealed class GetDashboardOverviewQueryHandler
             currentSteps = latestRecord.Steps;
             stepsGap = goal.TargetSteps.Value - latestRecord.Steps;
 
-            stepsProgressPercent = CalculateStepsProgress(
-                latestRecord.Steps,
-                goal.TargetSteps.Value);
+            stepsProgressPercent = MathF.Round(
+                CalculateStepsProgress(
+                    latestRecord.Steps,
+                    goal.TargetSteps.Value),
+                2);
         }
 
         return new DashboardGoalDto(
@@ -160,7 +169,8 @@ public sealed class GetDashboardOverviewQueryHandler
             goal.TargetWeight,
             goal.TargetSteps,
             goal.CreatedAt,
-            weightProgressPercent,
+            weightProgressRaw,
+            weightProgressClamped,
             stepsProgressPercent,
             currentWeight,
             currentSteps,
@@ -168,34 +178,30 @@ public sealed class GetDashboardOverviewQueryHandler
             stepsGap);
     }
 
-    private static float CalculateWeightProgress(
+    private static float CalculateWeightProgressRaw(
         float baselineWeight,
         float currentWeight,
         float targetWeight)
     {
-        if (baselineWeight == targetWeight)
+        if (Math.Abs(baselineWeight - targetWeight) < 0.01f)
         {
             return 100f;
         }
 
-        float progress;
+        var isWeightLossGoal = targetWeight < baselineWeight;
 
-        if (targetWeight < baselineWeight)
+        if (isWeightLossGoal)
         {
             var totalDelta = baselineWeight - targetWeight;
             var achievedDelta = baselineWeight - currentWeight;
 
-            progress = (achievedDelta / totalDelta) * 100f;
-        }
-        else
-        {
-            var totalDelta = targetWeight - baselineWeight;
-            var achievedDelta = currentWeight - baselineWeight;
-
-            progress = (achievedDelta / totalDelta) * 100f;
+            return (achievedDelta / totalDelta) * 100f;
         }
 
-        return Math.Clamp(progress, 0f, 100f);
+        var gainTotalDelta = targetWeight - baselineWeight;
+        var gainAchievedDelta = currentWeight - baselineWeight;
+
+        return (gainAchievedDelta / gainTotalDelta) * 100f;
     }
 
     private static float CalculateStepsProgress(int currentSteps, int targetSteps)
@@ -205,6 +211,6 @@ public sealed class GetDashboardOverviewQueryHandler
             return 0f;
         }
 
-        return Math.Clamp((currentSteps / (float)targetSteps) * 100f, 0f, 100f);
+        return (currentSteps / (float)targetSteps) * 100f;
     }
 }

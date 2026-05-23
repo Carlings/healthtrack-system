@@ -22,5 +22,10 @@ namespace HealthTrack.Application.Common.Interfaces.Repositories
         void Delete(HealthRecord record);
 
         Task SaveChangesAsync(CancellationToken cancellationToken);
+
+        Task<HealthRecord?> GetLastBeforeAsync(
+            int userId,
+            DateTime before,
+            CancellationToken cancellationToken);
     }
 }

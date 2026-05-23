@@ -69,4 +69,16 @@ public sealed class HealthRecordRepository : IHealthRecordRepository
     {
         await _context.SaveChangesAsync(cancellationToken);
     }
+
+    public async Task<HealthRecord?> GetLastBeforeAsync(
+        int userId,
+        DateTime before,
+        CancellationToken cancellationToken)
+    {
+        return await _context.HealthRecords
+            .AsNoTracking()
+            .Where(x => x.UserId == userId && x.RecordedAt <= before)
+            .OrderByDescending(x => x.RecordedAt)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
 }
