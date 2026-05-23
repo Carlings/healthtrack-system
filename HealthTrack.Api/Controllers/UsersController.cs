@@ -17,14 +17,26 @@ namespace HealthTrack.Api.Controllers
 
         [HttpPut("me")]
         public async Task<IActionResult> UpdateCurrentUserAsync(
-        [FromBody] UpdateCurrentUserCommand command,
-        CancellationToken cancellationToken)
+            [FromBody] UpdateCurrentUserCommand command,
+            CancellationToken cancellationToken)
         {
             var result = await Mediator.Send(
                 command,
                 cancellationToken);
 
             return Ok(result);
+        }
+
+        [HttpPut("change-password")]
+        public async Task<IActionResult> ChangePasswordAsync(
+            [FromBody] ChangePasswordCommand command,
+            CancellationToken cancellationToken)
+        {
+            await Mediator.Send(
+                command,
+                cancellationToken);
+
+            return NoContent();
         }
     }
 }
