@@ -15,6 +15,8 @@
         public DateTime CreatedAt { get; set; }
         public int TokenVersion { get; set; }
 
+        public string? AvatarUrl { get; set; }
+
         public ICollection<HealthRecord> HealthRecords { get; set; } = new List<HealthRecord>();
         public ICollection<Goal> Goals { get; set; } = new List<Goal>();
         public ICollection<UserActivity> UserActivities { get; set; } = new List<UserActivity>();
