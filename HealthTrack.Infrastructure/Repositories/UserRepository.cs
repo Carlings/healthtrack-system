@@ -52,4 +52,24 @@ public sealed class UserRepository : IUserRepository
     {
         await _context.SaveChangesAsync(cancellationToken);
     }
+
+    public async Task AddRefreshTokenAsync(
+    RefreshToken refreshToken,
+    CancellationToken cancellationToken)
+    {
+        await _context.RefreshTokens.AddAsync(
+            refreshToken,
+            cancellationToken);
+    }
+
+    public async Task<RefreshToken?> GetRefreshTokenAsync(
+        string token,
+        CancellationToken cancellationToken)
+    {
+        return await _context.RefreshTokens
+            .Include(x => x.User)
+            .FirstOrDefaultAsync(
+                x => x.Token == token,
+                cancellationToken);
+    }
 }

@@ -1,5 +1,6 @@
 ﻿using HealthTrack.Api.Common;
 using HealthTrack.Application.Identity.Auth.Commands;
+using HealthTrack.Application.Identity.Auth.DTOs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -23,5 +24,29 @@ public class AuthController : BaseApiController
         var result = await Mediator.Send(command);
 
         return Ok(result);
+    }
+
+    [HttpPost("refresh")]
+    public async Task<IActionResult> RefreshAsync(
+    [FromBody] RefreshTokenRequestDto request,
+    CancellationToken cancellationToken)
+    {
+        var result = await Mediator.Send(
+            new RefreshTokenCommand(request.RefreshToken),
+            cancellationToken);
+
+        return Ok(result);
+    }
+
+    [HttpPost("logout")]
+    public async Task<IActionResult> LogoutAsync(
+        [FromBody] RefreshTokenRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        await Mediator.Send(
+            new LogoutCommand(request.RefreshToken),
+            cancellationToken);
+
+        return NoContent();
     }
 }

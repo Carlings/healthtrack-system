@@ -18,7 +18,11 @@ namespace HealthTrack.Api.Infrastructure
             switch (exception)
             {
                 case ValidationException validationException:
-                    await WriteValidationProblemDetailsAsync(httpContext, validationException, cancellationToken);
+                    await WriteValidationProblemDetailsAsync(
+                        httpContext,
+                        validationException,
+                        cancellationToken);
+
                     return true;
 
                 case NotFoundException notFoundException:
@@ -28,6 +32,7 @@ namespace HealthTrack.Api.Infrastructure
                         "Resource not found",
                         notFoundException.Message,
                         cancellationToken);
+
                     return true;
 
                 case ForbiddenAccessException forbiddenAccessException:
@@ -37,6 +42,7 @@ namespace HealthTrack.Api.Infrastructure
                         "Forbidden",
                         forbiddenAccessException.Message,
                         cancellationToken);
+
                     return true;
 
                 case UnauthorizedAccessException unauthorizedAccessException:
@@ -46,6 +52,7 @@ namespace HealthTrack.Api.Infrastructure
                         "Unauthorized",
                         unauthorizedAccessException.Message,
                         cancellationToken);
+
                     return true;
 
                 case ConflictException conflictException:
@@ -55,6 +62,17 @@ namespace HealthTrack.Api.Infrastructure
                         "Conflict",
                         conflictException.Message,
                         cancellationToken);
+
+                    return true;
+
+                case InvalidOperationException invalidOperationException:
+                    await WriteProblemDetailsAsync(
+                        httpContext,
+                        HttpStatusCode.BadRequest,
+                        "Business rule violation",
+                        invalidOperationException.Message,
+                        cancellationToken);
+
                     return true;
 
                 default:
@@ -64,6 +82,7 @@ namespace HealthTrack.Api.Infrastructure
                         "Server error",
                         "An unexpected error occurred.",
                         cancellationToken);
+
                     return true;
             }
         }
@@ -77,7 +96,9 @@ namespace HealthTrack.Api.Infrastructure
                 .GroupBy(e => e.PropertyName)
                 .ToDictionary(
                     g => g.Key,
-                    g => g.Select(x => x.ErrorMessage).Distinct().ToArray());
+                    g => g.Select(x => x.ErrorMessage)
+                        .Distinct()
+                        .ToArray());
 
             var problemDetails = new ValidationProblemDetails(errors)
             {
@@ -87,10 +108,15 @@ namespace HealthTrack.Api.Infrastructure
                 Instance = context.Request.Path
             };
 
-            problemDetails.Extensions["traceId"] = context.TraceIdentifier;
+            problemDetails.Extensions["traceId"] =
+                context.TraceIdentifier;
 
-            context.Response.StatusCode = StatusCodes.Status400BadRequest;
-            await context.Response.WriteAsJsonAsync(problemDetails, cancellationToken);
+            context.Response.StatusCode =
+                StatusCodes.Status400BadRequest;
+
+            await context.Response.WriteAsJsonAsync(
+                problemDetails,
+                cancellationToken);
         }
 
         private static async Task WriteProblemDetailsAsync(
@@ -105,13 +131,43 @@ namespace HealthTrack.Api.Infrastructure
                 Status = (int)statusCode,
                 Title = title,
                 Detail = detail,
-                Instance = context.Request.Path
+                Instance = context.Request.Path,
+                Type = GetProblemType(statusCode)
             };
 
-            problemDetails.Extensions["traceId"] = context.TraceIdentifier;
+            problemDetails.Extensions["traceId"] =
+                context.TraceIdentifier;
 
             context.Response.StatusCode = (int)statusCode;
-            await context.Response.WriteAsJsonAsync(problemDetails, cancellationToken);
+
+            await context.Response.WriteAsJsonAsync(
+                problemDetails,
+                cancellationToken);
+        }
+
+        private static string GetProblemType(
+            HttpStatusCode statusCode)
+        {
+            return statusCode switch
+            {
+                HttpStatusCode.BadRequest =>
+                    "https://datatracker.ietf.org/doc/html/rfc9110#name-400-bad-request",
+
+                HttpStatusCode.Unauthorized =>
+                    "https://datatracker.ietf.org/doc/html/rfc9110#name-401-unauthorized",
+
+                HttpStatusCode.Forbidden =>
+                    "https://datatracker.ietf.org/doc/html/rfc9110#name-403-forbidden",
+
+                HttpStatusCode.NotFound =>
+                    "https://datatracker.ietf.org/doc/html/rfc9110#name-404-not-found",
+
+                HttpStatusCode.Conflict =>
+                    "https://datatracker.ietf.org/doc/html/rfc9110#name-409-conflict",
+
+                _ =>
+                    "https://datatracker.ietf.org/doc/html/rfc9110"
+            };
         }
     }
 }

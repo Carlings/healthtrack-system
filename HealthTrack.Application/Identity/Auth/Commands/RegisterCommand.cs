@@ -15,25 +15,28 @@ public record RegisterCommand(
 public class RegisterCommandHandler
     : IRequestHandler<RegisterCommand, AuthResponseDto>
 {
-    private readonly IUserRepository _authRepository;
+    private readonly IUserRepository _userRepository;
     private readonly IJwtTokenService _jwtTokenService;
     private readonly IPasswordHasherService _passwordHasherService;
+    private readonly IRefreshTokenService _refreshTokenService;
 
     public RegisterCommandHandler(
-        IUserRepository authRepository,
+        IUserRepository userRepository,
         IJwtTokenService jwtTokenService,
-        IPasswordHasherService passwordHasherService)
+        IPasswordHasherService passwordHasherService,
+        IRefreshTokenService refreshTokenService)
     {
-        _authRepository = authRepository;
+        _userRepository = userRepository;
         _jwtTokenService = jwtTokenService;
         _passwordHasherService = passwordHasherService;
+        _refreshTokenService = refreshTokenService;
     }
 
     public async Task<AuthResponseDto> Handle(
         RegisterCommand request,
         CancellationToken cancellationToken)
     {
-        var existingUser = await _authRepository.GetByEmailAsync(
+        var existingUser = await _userRepository.GetByEmailAsync(
             request.Email,
             cancellationToken);
 
@@ -53,17 +56,35 @@ public class RegisterCommandHandler
             user,
             request.Password);
 
-        await _authRepository.AddAsync(
+        await _userRepository.AddAsync(
             user,
             cancellationToken);
 
-        await _authRepository.SaveChangesAsync(
+        await _userRepository.SaveChangesAsync(
             cancellationToken);
 
         var accessToken = _jwtTokenService.GenerateAccessToken(user);
 
+        var refreshTokenValue = _refreshTokenService.GenerateRefreshToken();
+
+        var refreshToken = new RefreshToken
+        {
+            UserId = user.Id,
+            Token = refreshTokenValue,
+            ExpiresAt = DateTime.UtcNow.AddDays(7),
+            CreatedAt = DateTime.UtcNow
+        };
+
+        await _userRepository.AddRefreshTokenAsync(
+            refreshToken,
+            cancellationToken);
+
+        await _userRepository.SaveChangesAsync(
+            cancellationToken);
+
         return new AuthResponseDto(
             accessToken,
+            refreshTokenValue,
             user.Email,
             user.Name ?? string.Empty);
     }

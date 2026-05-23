@@ -13,5 +13,9 @@ namespace HealthTrack.Application.Common.Interfaces.Repositories
         Task AddAsync(User user, CancellationToken cancellationToken);
 
         Task SaveChangesAsync(CancellationToken cancellationToken);
+
+        Task AddRefreshTokenAsync(RefreshToken refreshToken, CancellationToken cancellationToken);
+
+        Task<RefreshToken?> GetRefreshTokenAsync(string token, CancellationToken cancellationToken);
     }
 }

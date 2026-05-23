@@ -21,13 +21,11 @@ public class JwtTokenService : IJwtTokenService
     {
         var jwtSettings = _configuration.GetSection("Jwt");
 
-        var claims = new List<Claim>
+        var claims = new[]
         {
-            new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
-
-            new(JwtRegisteredClaimNames.Email, user.Email),
-
-            new(ClaimTypes.Name, user.Name ?? string.Empty)
+            new Claim(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            new Claim(JwtRegisteredClaimNames.Email, user.Email),
+            new Claim("tokenVersion", user.TokenVersion.ToString())
         };
 
         var key = new SymmetricSecurityKey(
