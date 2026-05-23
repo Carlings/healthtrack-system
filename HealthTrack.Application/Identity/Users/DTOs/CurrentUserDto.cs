@@ -7,5 +7,6 @@
         DateTime? BirthDate,
         int? Height,
         string? Gender,
-        DateTime CreatedAt);
+        DateTime CreatedAt,
+        string? AvatarUrl);
 }

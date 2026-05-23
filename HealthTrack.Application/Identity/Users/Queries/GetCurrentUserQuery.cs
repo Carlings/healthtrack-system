@@ -48,7 +48,8 @@ namespace HealthTrack.Application.Identity.Users.Queries
                 userBirthDate,
                 user.Height,
                 userGender,
-                user.CreatedAt);
+                user.CreatedAt,
+                user.AvatarUrl);
         }
     }
 }

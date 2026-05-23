@@ -74,6 +74,7 @@ public sealed class UpdateCurrentUserCommandHandler
             user.Gender == Domain.Entities.Gender.Unknown
                 ? null
                 : user.Gender.ToString(),
-            user.CreatedAt);
+            user.CreatedAt,
+            user.AvatarUrl);
     }
 }

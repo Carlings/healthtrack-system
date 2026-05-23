@@ -1,136 +1,139 @@
+using System.Text;
 using HealthTrack.Api.Extensions;
 using HealthTrack.Application.Common.Interfaces.Identity;
+using HealthTrack.Application.Common.Options;
 using HealthTrack.Infrastructure;
 using HealthTrack.Infrastructure.Persistence;
 using HealthTrack.Infrastructure.Persistence.Seeding;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System.Text;
 
-namespace HealthTrack.Api
+namespace HealthTrack.Api;
+
+public class Program
 {
-    public class Program
+    public static async Task Main(string[] args)
     {
-        public static async Task Main(string[] args)
-        {
-            var builder = WebApplication.CreateBuilder(args);
+        var builder = WebApplication.CreateBuilder(args);
 
-            builder.Services.AddInfrastructure(builder.Configuration);
-            builder.Services.AddApiServices();
+        builder.Services.AddInfrastructure(builder.Configuration);
+        builder.Services.AddApiServices();
 
-            builder.Services
-                .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer(options =>
-                {
-                    var jwtSettings =
-                        builder.Configuration.GetSection("Jwt");
-
-                    options.TokenValidationParameters =
-                        new TokenValidationParameters
-                        {
-                            ValidateIssuer = true,
-                            ValidateAudience = true,
-                            ValidateLifetime = true,
-                            ValidateIssuerSigningKey = true,
-
-                            ValidIssuer = jwtSettings["Issuer"],
-                            ValidAudience = jwtSettings["Audience"],
-
-                            IssuerSigningKey =
-                                new SymmetricSecurityKey(
-                                    Encoding.UTF8.GetBytes(
-                                        jwtSettings["Key"]!))
-                        };
-
-                    options.Events = new JwtBearerEvents
-                    {
-                        OnTokenValidated = async context =>
-                        {
-                            var validator =
-                                context.HttpContext.RequestServices
-                                    .GetRequiredService<ITokenValidationService>();
-
-                            var isValid =
-                                await validator.IsValidAsync(
-                                    context.Principal!,
-                                    context.HttpContext.RequestAborted);
-
-                            if (!isValid)
-                            {
-                                context.Fail("Token revoked.");
-                            }
-                        }
-                    };
-                });
-
-            builder.Services.AddAuthorization();
-
-            builder.Services.AddControllers();
-            builder.Services.AddEndpointsApiExplorer();
-
-            builder.Services.AddSwaggerGen(options =>
+        builder.Services
+            .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
             {
-                options.SwaggerDoc("v1", new OpenApiInfo
-                {
-                    Title = "HealthTrack.Api",
-                    Version = "v1"
-                });
+                var jwtSettings = builder.Configuration.GetSection("Jwt");
 
-                var jwtSecurityScheme = new OpenApiSecurityScheme
+                options.TokenValidationParameters = new TokenValidationParameters
                 {
-                    Scheme = "bearer",
-                    BearerFormat = "JWT",
-                    Name = "Authorization",
-                    In = ParameterLocation.Header,
-                    Type = SecuritySchemeType.Http,
-                    Description = "Enter JWT Bearer token only",
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
 
-                    Reference = new OpenApiReference
-                    {
-                        Id = "Bearer",
-                        Type = ReferenceType.SecurityScheme
-                    }
+                    ValidIssuer = jwtSettings["Issuer"],
+                    ValidAudience = jwtSettings["Audience"],
+
+                    IssuerSigningKey = new SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes(jwtSettings["Key"]!))
                 };
 
-                options.AddSecurityDefinition("Bearer", jwtSecurityScheme);
-
-                options.AddSecurityRequirement(new OpenApiSecurityRequirement
+                options.Events = new JwtBearerEvents
                 {
-                    { jwtSecurityScheme, Array.Empty<string>() }
-                });
+                    OnTokenValidated = async context =>
+                    {
+                        var validator = context.HttpContext.RequestServices
+                            .GetRequiredService<ITokenValidationService>();
+
+                        var isValid = await validator.IsValidAsync(
+                            context.Principal!,
+                            context.HttpContext.RequestAborted);
+
+                        if (!isValid)
+                        {
+                            context.Fail("Token revoked.");
+                        }
+                    }
+                };
             });
 
-            var app = builder.Build();
+        builder.Services.Configure<AvatarStorageOptions>(
+            builder.Configuration.GetSection(AvatarStorageOptions.SectionName));
 
-            app.UseExceptionHandler();
-
-            if (app.Environment.IsDevelopment())
+        builder.Services.PostConfigure<AvatarStorageOptions>(options =>
+        {
+            if (!Path.IsPathRooted(options.RootPath))
             {
-                app.UseSwagger();
-                app.UseSwaggerUI();
+                options.RootPath = Path.GetFullPath(
+                    Path.Combine(builder.Environment.ContentRootPath, options.RootPath));
             }
+        });
 
-            app.UseHttpsRedirection();
+        builder.Services.AddAuthorization();
 
-            app.UseAuthentication();
-            app.UseAuthorization();
+        builder.Services.AddControllers();
+        builder.Services.AddEndpointsApiExplorer();
 
-            app.MapControllers();
-
-            using (var scope = app.Services.CreateScope())
+        builder.Services.AddSwaggerGen(options =>
+        {
+            options.SwaggerDoc("v1", new OpenApiInfo
             {
-                var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+                Title = "HealthTrack.Api",
+                Version = "v1"
+            });
 
-                var passwordHasherService =
-                    scope.ServiceProvider.GetRequiredService<IPasswordHasherService>();
+            var jwtSecurityScheme = new OpenApiSecurityScheme
+            {
+                Scheme = "bearer",
+                BearerFormat = "JWT",
+                Name = "Authorization",
+                In = ParameterLocation.Header,
+                Type = SecuritySchemeType.Http,
+                Description = "Enter JWT Bearer token only",
+                Reference = new OpenApiReference
+                {
+                    Id = "Bearer",
+                    Type = ReferenceType.SecurityScheme
+                }
+            };
 
-                await AppDbSeeder.SeedAsync(
-                    db,
-                    passwordHasherService);
-            }
+            options.AddSecurityDefinition("Bearer", jwtSecurityScheme);
 
-            await app.RunAsync();
+            options.AddSecurityRequirement(new OpenApiSecurityRequirement
+            {
+                { jwtSecurityScheme, Array.Empty<string>() }
+            });
+        });
+
+        var app = builder.Build();
+
+        app.UseExceptionHandler();
+
+        if (app.Environment.IsDevelopment())
+        {
+            app.UseSwagger();
+            app.UseSwaggerUI();
         }
+
+        app.UseHttpsRedirection();
+
+        app.UseStaticFiles();
+
+        app.UseAuthentication();
+        app.UseAuthorization();
+
+        app.MapControllers();
+
+        using (var scope = app.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+            var passwordHasherService = scope.ServiceProvider.GetRequiredService<IPasswordHasherService>();
+
+            await AppDbSeeder.SeedAsync(db, passwordHasherService);
+        }
+
+        await app.RunAsync();
     }
 }
