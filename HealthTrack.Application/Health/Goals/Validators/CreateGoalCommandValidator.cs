@@ -12,7 +12,7 @@ public sealed class CreateGoalCommandValidator : AbstractValidator<CreateGoalCom
             .LessThan(1000);
 
         RuleFor(x => x.TargetSteps)
-            .GreaterThanOrEqualTo(0)
+            .GreaterThan(0)
             .LessThanOrEqualTo(100000);
     }
 }
