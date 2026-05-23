@@ -20,36 +20,52 @@ public class Program
         builder.Services.AddInfrastructure(builder.Configuration);
         builder.Services.AddApiServices();
 
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("Frontend", policy =>
+            {
+                policy
+                    .WithOrigins("http://localhost:5173")
+                    .AllowAnyHeader()
+                    .AllowAnyMethod();
+            });
+        });
+
         builder.Services
             .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
                 var jwtSettings = builder.Configuration.GetSection("Jwt");
 
-                options.TokenValidationParameters = new TokenValidationParameters
-                {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
+                options.TokenValidationParameters =
+                    new TokenValidationParameters
+                    {
+                        ValidateIssuer = true,
+                        ValidateAudience = true,
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
 
-                    ValidIssuer = jwtSettings["Issuer"],
-                    ValidAudience = jwtSettings["Audience"],
+                        ValidIssuer = jwtSettings["Issuer"],
+                        ValidAudience = jwtSettings["Audience"],
 
-                    IssuerSigningKey = new SymmetricSecurityKey(
-                        Encoding.UTF8.GetBytes(jwtSettings["Key"]!))
-                };
+                        IssuerSigningKey =
+                            new SymmetricSecurityKey(
+                                Encoding.UTF8.GetBytes(
+                                    jwtSettings["Key"]!))
+                    };
 
                 options.Events = new JwtBearerEvents
                 {
                     OnTokenValidated = async context =>
                     {
-                        var validator = context.HttpContext.RequestServices
-                            .GetRequiredService<ITokenValidationService>();
+                        var validator =
+                            context.HttpContext.RequestServices
+                                .GetRequiredService<ITokenValidationService>();
 
-                        var isValid = await validator.IsValidAsync(
-                            context.Principal!,
-                            context.HttpContext.RequestAborted);
+                        var isValid =
+                            await validator.IsValidAsync(
+                                context.Principal!,
+                                context.HttpContext.RequestAborted);
 
                         if (!isValid)
                         {
@@ -60,14 +76,18 @@ public class Program
             });
 
         builder.Services.Configure<AvatarStorageOptions>(
-            builder.Configuration.GetSection(AvatarStorageOptions.SectionName));
+            builder.Configuration.GetSection(
+                AvatarStorageOptions.SectionName));
 
         builder.Services.PostConfigure<AvatarStorageOptions>(options =>
         {
             if (!Path.IsPathRooted(options.RootPath))
             {
-                options.RootPath = Path.GetFullPath(
-                    Path.Combine(builder.Environment.ContentRootPath, options.RootPath));
+                options.RootPath =
+                    Path.GetFullPath(
+                        Path.Combine(
+                            builder.Environment.ContentRootPath,
+                            options.RootPath));
             }
         });
 
@@ -84,27 +104,32 @@ public class Program
                 Version = "v1"
             });
 
-            var jwtSecurityScheme = new OpenApiSecurityScheme
-            {
-                Scheme = "bearer",
-                BearerFormat = "JWT",
-                Name = "Authorization",
-                In = ParameterLocation.Header,
-                Type = SecuritySchemeType.Http,
-                Description = "Enter JWT Bearer token only",
-                Reference = new OpenApiReference
+            var jwtSecurityScheme =
+                new OpenApiSecurityScheme
                 {
-                    Id = "Bearer",
-                    Type = ReferenceType.SecurityScheme
-                }
-            };
+                    Scheme = "bearer",
+                    BearerFormat = "JWT",
+                    Name = "Authorization",
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.Http,
+                    Description = "Enter JWT Bearer token only",
 
-            options.AddSecurityDefinition("Bearer", jwtSecurityScheme);
+                    Reference = new OpenApiReference
+                    {
+                        Id = "Bearer",
+                        Type = ReferenceType.SecurityScheme
+                    }
+                };
 
-            options.AddSecurityRequirement(new OpenApiSecurityRequirement
-            {
-                { jwtSecurityScheme, Array.Empty<string>() }
-            });
+            options.AddSecurityDefinition(
+                "Bearer",
+                jwtSecurityScheme);
+
+            options.AddSecurityRequirement(
+                new OpenApiSecurityRequirement
+                {
+                    { jwtSecurityScheme, Array.Empty<string>() }
+                });
         });
 
         var app = builder.Build();
@@ -119,6 +144,8 @@ public class Program
 
         app.UseHttpsRedirection();
 
+        app.UseCors("Frontend");
+
         app.UseStaticFiles();
 
         app.UseAuthentication();
@@ -128,10 +155,17 @@ public class Program
 
         using (var scope = app.Services.CreateScope())
         {
-            var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            var passwordHasherService = scope.ServiceProvider.GetRequiredService<IPasswordHasherService>();
+            var db =
+                scope.ServiceProvider
+                    .GetRequiredService<AppDbContext>();
 
-            await AppDbSeeder.SeedAsync(db, passwordHasherService);
+            var passwordHasherService =
+                scope.ServiceProvider
+                    .GetRequiredService<IPasswordHasherService>();
+
+            await AppDbSeeder.SeedAsync(
+                db,
+                passwordHasherService);
         }
 
         await app.RunAsync();
