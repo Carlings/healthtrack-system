@@ -149,7 +149,6 @@ HealthTrack.sln
 ### Prerequisites
 - .NET 8 SDK
 - SQL Server
-- Visual Studio 2022 / Rider / VS Code
 - Git
 
 ## Getting Started
