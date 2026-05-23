@@ -1,6 +1,8 @@
-﻿using HealthTrack.Api.Common;
+using System.Text.Json;
+using HealthTrack.Api.Common;
 using HealthTrack.Application.Health.Notifications.Commands;
 using HealthTrack.Application.Health.Notifications.Queries;
+using HealthTrack.Infrastructure.Realtime;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HealthTrack.Api.Controllers;
@@ -16,6 +18,55 @@ public sealed class NotificationsController : BaseApiController
             cancellationToken);
 
         return Ok(result);
+    }
+
+    [HttpGet("stream")]
+    public async Task StreamNotificationsAsync(CancellationToken cancellationToken)
+    {
+        if (!IsAuthenticated)
+        {
+            Response.StatusCode = StatusCodes.Status401Unauthorized;
+            return;
+        }
+
+        Response.Headers.ContentType = "text/event-stream";
+        Response.Headers.CacheControl = "no-cache";
+        Response.Headers.Connection = "keep-alive";
+        var userId = UserId;
+
+        var broker = HttpContext.RequestServices.GetRequiredService<INotificationRealtimeBroker>();
+        var (subscriptionId, reader) = broker.Subscribe(userId);
+
+        try
+        {
+            await Response.WriteAsync(": connected\n\n", cancellationToken);
+            await Response.Body.FlushAsync(cancellationToken);
+
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                var readTask = reader.ReadAsync(cancellationToken).AsTask();
+                var delayTask = Task.Delay(TimeSpan.FromSeconds(20), cancellationToken);
+                var completed = await Task.WhenAny(readTask, delayTask);
+
+                if (completed == delayTask)
+                {
+                    await Response.WriteAsync(": keepalive\n\n", cancellationToken);
+                    await Response.Body.FlushAsync(cancellationToken);
+                    continue;
+                }
+
+                var message = await readTask;
+                var payload = JsonSerializer.Serialize(message);
+
+                await Response.WriteAsync($"event: {message.Event}\n", cancellationToken);
+                await Response.WriteAsync($"data: {payload}\n\n", cancellationToken);
+                await Response.Body.FlushAsync(cancellationToken);
+            }
+        }
+        finally
+        {
+            broker.Unsubscribe(userId, subscriptionId);
+        }
     }
 
     [HttpGet("all")]

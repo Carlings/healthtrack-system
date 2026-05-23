@@ -11,6 +11,10 @@ public sealed class UpdateHealthRecordCommandValidator
         RuleFor(x => x.Id)
             .GreaterThan(0);
 
+        RuleFor(x => x.RecordedAt)
+            .LessThanOrEqualTo(_ => DateTime.UtcNow)
+            .WithMessage("RecordedAt cannot be in the future.");
+
         RuleFor(x => x.Weight)
             .GreaterThan(0);
 

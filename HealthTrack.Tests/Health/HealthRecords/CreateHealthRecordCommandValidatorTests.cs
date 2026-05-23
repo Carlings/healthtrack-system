@@ -63,4 +63,23 @@ public sealed class CreateHealthRecordCommandValidatorTests
         Assert.That(result.IsValid, Is.False);
         Assert.That(result.Errors.Exists(x => x.PropertyName == nameof(CreateHealthRecordCommand.Pulse)), Is.True);
     }
+
+    [Test]
+    public void Validate_WhenRecordedAtIsInFuture_ShouldFail()
+    {
+        var command = new CreateHealthRecordCommand(
+            DateTime.UtcNow.AddMinutes(5),
+            78.5f,
+            72,
+            36.6f,
+            120,
+            80,
+            8500,
+            7.5f);
+
+        var result = _validator.Validate(command);
+
+        Assert.That(result.IsValid, Is.False);
+        Assert.That(result.Errors.Exists(x => x.PropertyName == nameof(CreateHealthRecordCommand.RecordedAt)), Is.True);
+    }
 }

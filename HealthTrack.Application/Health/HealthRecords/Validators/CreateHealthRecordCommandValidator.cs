@@ -8,6 +8,10 @@ public sealed class CreateHealthRecordCommandValidator
 {
     public CreateHealthRecordCommandValidator()
     {
+        RuleFor(x => x.RecordedAt)
+            .LessThanOrEqualTo(_ => DateTime.UtcNow)
+            .WithMessage("RecordedAt cannot be in the future.");
+
         RuleFor(x => x.Weight)
             .GreaterThan(0);
 

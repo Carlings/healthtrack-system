@@ -1,4 +1,5 @@
-﻿using HealthTrack.Application.Common.Interfaces.Identity;
+using HealthTrack.Application.Common.Interfaces.Identity;
+using HealthTrack.Application.Common.Interfaces.Realtime;
 using HealthTrack.Application.Common.Interfaces.Repositories;
 using HealthTrack.Application.Health.Notifications.DTOs;
 using HealthTrack.Domain.Entities;
@@ -16,13 +17,16 @@ public sealed class CreateNotificationCommandHandler
 {
     private readonly INotificationRepository _repository;
     private readonly ICurrentUserService _currentUser;
+    private readonly INotificationRealtimePublisher _realtimePublisher;
 
     public CreateNotificationCommandHandler(
         INotificationRepository repository,
-        ICurrentUserService currentUser)
+        ICurrentUserService currentUser,
+        INotificationRealtimePublisher realtimePublisher)
     {
         _repository = repository;
         _currentUser = currentUser;
+        _realtimePublisher = realtimePublisher;
     }
 
     public async Task<NotificationDto> Handle(
@@ -43,6 +47,14 @@ public sealed class CreateNotificationCommandHandler
             cancellationToken);
 
         await _repository.SaveChangesAsync(
+            cancellationToken);
+
+        await _realtimePublisher.PublishCreatedAsync(
+            notification.UserId,
+            notification.Id,
+            notification.Message,
+            notification.Type.ToString(),
+            notification.CreatedAt,
             cancellationToken);
 
         return new NotificationDto(

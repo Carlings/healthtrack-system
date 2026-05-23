@@ -1,4 +1,5 @@
-﻿using HealthTrack.Application.Common.Interfaces.Identity;
+using HealthTrack.Application.Common.Interfaces.Events;
+using HealthTrack.Application.Common.Interfaces.Identity;
 using HealthTrack.Application.Common.Interfaces.Repositories;
 using HealthTrack.Application.Health.HealthRecords.DTOs;
 using HealthTrack.Domain.Entities;
@@ -22,13 +23,16 @@ public sealed class CreateHealthRecordCommandHandler
 {
     private readonly IHealthRecordRepository _repository;
     private readonly ICurrentUserService _currentUser;
+    private readonly IHealthEventsPublisher _eventsPublisher;
 
     public CreateHealthRecordCommandHandler(
         IHealthRecordRepository repository,
-        ICurrentUserService currentUser)
+        ICurrentUserService currentUser,
+        IHealthEventsPublisher eventsPublisher)
     {
         _repository = repository;
         _currentUser = currentUser;
+        _eventsPublisher = eventsPublisher;
     }
 
     public async Task<HealthRecordDto> Handle(
@@ -51,6 +55,14 @@ public sealed class CreateHealthRecordCommandHandler
         await _repository.AddAsync(record, cancellationToken);
 
         await _repository.SaveChangesAsync(cancellationToken);
+
+        await _eventsPublisher.PublishHealthRecordCreatedAsync(
+            _currentUser.UserId,
+            request.RecordedAt,
+            request.Pulse,
+            request.SystolicBP,
+            request.DiastolicBP,
+            cancellationToken);
 
         return new HealthRecordDto(
             record.Id,
