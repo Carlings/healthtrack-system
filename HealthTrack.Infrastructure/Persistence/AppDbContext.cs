@@ -47,6 +47,9 @@ namespace HealthTrack.Infrastructure.Persistence
 
                 entity.Property(x => x.CreatedAt)
                     .IsRequired();
+
+                entity.Property(x => x.AvatarUrl)
+                    .HasMaxLength(500);
             });
 
             modelBuilder.Entity<HealthRecord>(entity =>
