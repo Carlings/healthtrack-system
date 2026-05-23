@@ -13,6 +13,7 @@
         public Gender Gender { get; set; }
 
         public DateTime CreatedAt { get; set; }
+        public int TokenVersion { get; set; }
 
         public ICollection<HealthRecord> HealthRecords { get; set; } = new List<HealthRecord>();
         public ICollection<Goal> Goals { get; set; } = new List<Goal>();
