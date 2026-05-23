@@ -1,6 +1,7 @@
-﻿using HealthTrack.Api.Common;
+using HealthTrack.Api.Common;
 using HealthTrack.Application.Health.Activities.Commands;
 using HealthTrack.Application.Health.Activities.Queries;
+using HealthTrack.Application.Health.Activities.Queries.GetPaged;
 using Microsoft.AspNetCore.Mvc;
 
 namespace HealthTrack.Api.Controllers;
@@ -14,6 +15,19 @@ public sealed class ActivitiesController : BaseApiController
     {
         var result = await Mediator.Send(
             new GetActivitiesQuery(),
+            cancellationToken);
+
+        return Ok(result);
+    }
+
+    [HttpGet("paged")]
+    public async Task<IActionResult> GetPagedActivitiesAsync(
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 10,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await Mediator.Send(
+            new GetPagedActivitiesQuery(page, pageSize),
             cancellationToken);
 
         return Ok(result);
