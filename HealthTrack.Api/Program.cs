@@ -24,10 +24,18 @@ public class Program
         {
             options.AddPolicy("Frontend", policy =>
             {
-                var configuredOrigins =
-                    builder.Configuration
-                        .GetSection("Cors:AllowedOrigins")
-                        .Get<string[]>() ?? Array.Empty<string>();
+                var section = builder.Configuration.GetSection("Cors:AllowedOrigins");
+                var configuredOrigins = section.Get<string[]>() ?? Array.Empty<string>();
+
+                var asString = section.Get<string>();
+                if (configuredOrigins.Length == 0 && !string.IsNullOrWhiteSpace(asString))
+                {
+                    configuredOrigins = asString
+                        .Split(new[] { ',', ';', ' ' }, StringSplitOptions.RemoveEmptyEntries)
+                        .Select(x => x.Trim())
+                        .Where(x => x.Length > 0)
+                        .ToArray();
+                }
 
                 var allowedOrigins = configuredOrigins.Length > 0
                     ? configuredOrigins
