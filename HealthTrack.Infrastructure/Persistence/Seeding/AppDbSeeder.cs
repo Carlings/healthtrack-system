@@ -1,6 +1,7 @@
 ﻿using Bogus;
 using HealthTrack.Application.Common.Interfaces.Identity;
 using HealthTrack.Domain.Entities;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
 namespace HealthTrack.Infrastructure.Persistence.Seeding;
@@ -11,7 +12,20 @@ public static class AppDbSeeder
         AppDbContext context,
         IPasswordHasherService passwordHasherService)
     {
-        await context.Database.MigrateAsync();
+        // Retry migrations policy while database container is starting
+        const int maxAttempts = 5;
+        for (var attempt = 1; attempt <= maxAttempts; attempt++)
+        {
+            try
+            {
+                await context.Database.MigrateAsync();
+                break;
+            }
+            catch (SqlException ex) when (ex.Number == 1801 && attempt < maxAttempts)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(2));
+            }
+        }
 
         Randomizer.Seed = new Random(42);
         var faker = new Faker("en");
