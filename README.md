@@ -4,237 +4,128 @@
 ![Build](https://img.shields.io/github/actions/workflow/status/Carlings/healthtrack-system/ci.yml)
 ![License](https://img.shields.io/badge/license-educational-green)
 
-HealthTrack API is the backend for a diploma web application designed to monitor a person’s physical state and daily progress.  
-It provides authentication, user profile management, health records tracking, goals, activities, notifications, dashboard aggregation, avatar uploads, refresh token flow, and JWT-based authorization.
+Backend for the HealthTrack diploma project: auth, profile, records, goals, activities, notifications, dashboard aggregation, realtime notification stream (SSE), and avatar uploads.
 
 ## Tech Stack
 
-- **ASP.NET Core Web API** (.NET 8)
-- **Entity Framework Core**
-- **MS SQL Server**
-- **MediatR** (CQRS)
-- **FluentValidation**
-- **JWT authentication**
-- **Refresh token flow**
-- **Clean Architecture / vertical-slice inspired structure**
-- **NUnit + Moq + FluentAssertions** for unit testing
-
----
-
-## Features
-
-### Authentication
-- Register
-- Login
-- Refresh access token
-- Logout
-- JWT access token + refresh token flow
-- Token version invalidation for instant logout / password change invalidation
-
-### User Profile
-- Get current user profile
-- Update current user profile
-- Change password
-- Upload avatar
-- Delete avatar
-
-### Health Tracking
-- Create, read, update, delete health records
-- Filter health records by date range
-- User-owned access only
-
-### Goals
-- Create, read, update, delete goals
-- Dashboard progress calculations
-
-### Activities
-- Create, read, update, delete activities
-- Activity types lookup
-- Calories burned calculation based on activity type and duration
-
-### Notifications
-- Get unread notifications
-- Get all notifications
-- Get notification by id
-- Mark notification as read
-- Create and delete notifications
-
-### Dashboard
-- Aggregated overview endpoint for the main UI
-- Latest health stats
-- Weight trend
-- Latest records
-- Latest activities
-- Latest notifications
-- Unread notifications count
-- Goal progress metrics
-
----
-
-## Architecture
-
-The solution follows a clean and pragmatic structure:
-
-- **HealthTrack.Domain**: Core entities and enums.
-- **HealthTrack.Application**: Commands, queries, DTOs, validators, interfaces, business logic.
-- **HealthTrack.Infrastructure**: EF Core, repositories, JWT/token services, password hashing, file storage, persistence.
-- **HealthTrack.Api**: Controllers, middleware, Swagger, DI registration, HTTP pipeline.
-
----
+- ASP.NET Core Web API (.NET 8)
+- EF Core + SQL Server
+- MediatR (CQRS style)
+- FluentValidation
+- JWT + Refresh tokens
+- NUnit + Moq + FluentAssertions
 
 ## Solution Structure
 
-```text
-HealthTrack.sln
-- HealthTrack.Api
-- HealthTrack.Application
-- HealthTrack.Domain
-- HealthTrack.Infrastructure
-- HealthTrack.Tests
-```
+- `HealthTrack.Api` — controllers, middleware, DI, Swagger, HTTP pipeline
+- `HealthTrack.Application` — commands, queries, DTOs, validators, interfaces
+- `HealthTrack.Domain` — entities/enums
+- `HealthTrack.Infrastructure` — DbContext, repositories, token/avatar/realtime services
+- `HealthTrack.Tests` — unit tests
 
----
+## Main Features
 
-## Main API Endpoints
+### Authentication
 
-### Auth
-- POST /api/auth/register
-- POST /api/auth/login
-- POST /api/auth/refresh
-- POST /api/auth/logout
+- Register / Login / Refresh / Logout
+- Token version invalidation (forced re-login support)
 
 ### Users
-- GET /api/users/me
-- PUT /api/users/me
-- PUT /api/users/change-password
-- POST /api/users/avatar
-- DELETE /api/users/avatar
+
+- `GET /api/users/me`
+- `PUT /api/users/me`
+- `PUT /api/users/change-password`
+- `POST /api/users/avatar`
+- `DELETE /api/users/avatar`
 
 ### Health Records
-- GET /api/records
-- GET /api/records/{id}
-- POST /api/records
-- PUT /api/records/{id}
-- DELETE /api/records/{id}
+
+- CRUD + filtering by date range
+- Paged list:
+  - `GET /api/records/paged?page=1&pageSize=10&from=&to=`
+- Validation includes prevention of future `recordedAt`
 
 ### Goals
-- GET /api/goals
-- POST /api/goals
-- PUT /api/goals/{id}
-- DELETE /api/goals/{id}
+
+- CRUD goals
+- Dashboard progress metrics
 
 ### Activities
-- GET /api/activities
-- GET /api/activities/{id}
-- POST /api/activities
-- PUT /api/activities/{id}
-- DELETE /api/activities/{id}
-- GET /api/activities/types
+
+- CRUD activities
+- Activity types lookup: `GET /api/activities/types`
+- Paged list: `GET /api/activities/paged?page=1&pageSize=10`
 
 ### Notifications
-- GET /api/notifications
-- GET /api/notifications/all
-- GET /api/notifications/{id}
-- POST /api/notifications
-- PUT /api/notifications/{id}/read
-- DELETE /api/notifications/{id}
+
+- Unread/all/by-id, mark as read, create/delete
+- SSE stream:
+  - `GET /api/notifications/stream` (`text/event-stream`)
+- Auto-generated alerts from health records:
+  - high blood pressure
+  - high heart rate
+- Duplicate cooldown: 1 minute per message/type, with future-date guard fix
 
 ### Dashboard
-- GET /api/dashboard/overview
 
----
+- `GET /api/dashboard/overview`
+- Returns:
+  - latest stats
+  - weight trend
+  - latest records/activities/notifications
+  - unread notifications count
+  - goal progress snapshot
 
-## Requirements
+## Realtime Flow
 
-### Prerequisites
-- .NET 8 SDK
-- SQL Server
-- Git
+1. User creates record (`POST /api/records`)
+2. Health rules evaluate pulse/pressure
+3. Notification saved in DB
+4. Realtime publisher emits `notification.created`
+5. SSE endpoint pushes event to connected frontend clients
 
-## Getting Started
+## CI
 
-1. Clone repository
-2. Configure appsettings.json
-3. Apply EF Core migrations
-4. Run the API
-5. Open Swagger UI
+Workflow: `.github/workflows/ci.yml`
 
----
+- restore
+- build (Release)
+- test + trx artifact upload
 
-## Configuration
+## Configuration (`appsettings.json`)
 
-### appsettings.json
-Set your database connection and JWT settings.
+- `ConnectionStrings:DefaultConnection`
+- `Jwt:Issuer`
+- `Jwt:Audience`
+- `Jwt:Key`
+- `Jwt:AccessTokenMinutes`
+- `Jwt:RefreshTokenDays`
+- `AvatarStorage:RootPath`
+- `AvatarStorage:RequestPath`
 
-```json
-{
-  "ConnectionStrings": {
-    "DefaultConnection": "Server=.;Database=HealthTrackDb;Trusted_Connection=True;TrustServerCertificate=True"
-  },
-  "Jwt": {
-    "Issuer": "HealthTrack",
-    "Audience": "HealthTrackUsers",
-    "Key": "YOUR_SUPER_SECRET_KEY",
-    "AccessTokenMinutes": 10,
-    "RefreshTokenDays": 7
-  },
-  "AvatarStorage": {
-    "RootPath": "wwwroot/avatars",
-    "RequestPath": "/avatars"
-  }
-}
+## Run Locally
+
+```bash
+dotnet restore
+dotnet build HealthTrack.sln -c Release
+dotnet run --project HealthTrack.Api
 ```
 
----
-
-## Running the Project
-
-Restore: `dotnet restore`  
-Build: `dotnet build`  
-Run: `dotnet run --project HealthTrack.Api`
-
-Swagger UI:
-https://localhost:xxxx/swagger
-
----
-
-## Database
-
-The app uses EF Core migrations.
-Database schema includes: Users, HealthRecords, Goals, ActivityTypes, UserActivities, Notifications, RefreshTokens.
-
----
+Swagger: `https://localhost:<port>/swagger`
 
 ## Tests
 
-Run tests: `dotnet test`  
-Run with coverage: `dotnet test --collect:"XPlat Code Coverage"`
+```bash
+dotnet test HealthTrack.sln -c Release
+```
 
----
+## Notes
 
-## Security Notes
+- Avatar storage is local filesystem-based (`wwwroot/avatars`) at the moment.
+- Realtime notifications are delivered through SSE and consumed by frontend stream subscription.
 
-- JWT access tokens are short-lived
-- Refresh tokens are stored in database
-- Token rotation is implemented
-- TokenVersion invalidation is used for forced logout/password reset
-- Passwords are hashed using ASP.NET Core PasswordHasher
+## Next Improvements (Optional)
 
----
-
-## Future Improvements
-
-- Azure Blob Storage integration
-- Email-based password recovery
-- Role-based authorization
-- Docker support
-- Redis caching
-- Rate limiting
-- API versioning
-- Integration tests
-- Frontend SPA client
-
----
-
-## File Uploads
-Supported formats: .jpg, .jpeg, .png, .webp. Max size: 5 MB.
+- Move avatar storage to Azure Blob Storage
+- Add backend-calculated dashboard status fields
+- Add Azure deployment workflows for App Service + SQL
