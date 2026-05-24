@@ -1,0 +1,53 @@
+services:
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: healthtrack-db
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "${MSSQL_SA_PASSWORD}"
+    ports:
+      - "${DB_PORT:-1433}:1433"
+    volumes:
+      - healthtrack_mssql:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P $$MSSQL_SA_PASSWORD -Q \"SELECT 1\" -C || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  api:
+    build:
+      context: .
+      dockerfile: HealthTrack.Api/Dockerfile
+    container_name: healthtrack-api
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: "${ASPNETCORE_ENVIRONMENT:-Development}"
+      ConnectionStrings__DefaultConnection: "${CONNECTION_STRING}"
+      Jwt__Issuer: "${JWT_ISSUER:-HealthTrack}"
+      Jwt__Audience: "${JWT_AUDIENCE:-HealthTrackUsers}"
+      Jwt__Key: "${JWT_KEY}"
+      Jwt__AccessTokenMinutes: "${JWT_ACCESS_TOKEN_MINUTES:-10}"
+      Jwt__RefreshTokenDays: "${JWT_REFRESH_TOKEN_DAYS:-30}"
+      AvatarStorage__RootPath: "wwwroot/avatars"
+      AvatarStorage__RequestPath: "/avatars"
+    ports:
+      - "${API_PORT:-7261}:8080"
+
+  ui:
+    build:
+      context: ../HealthTrackUI
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ""
+    container_name: healthtrack-ui
+    depends_on:
+      - api
+    ports:
+      - "${UI_PORT:-5173}:80"
+
+volumes:
+  healthtrack_mssql:

@@ -23,3 +23,5 @@ obj/
 
 # Local launch profiles
 **/Properties/launchSettings.json
+/docker-compose.yml
+/.env.dev
