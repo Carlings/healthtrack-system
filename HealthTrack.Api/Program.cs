@@ -24,10 +24,21 @@ public class Program
         {
             options.AddPolicy("Frontend", policy =>
             {
-                policy
-                    .WithOrigins(
+                var configuredOrigins =
+                    builder.Configuration
+                        .GetSection("Cors:AllowedOrigins")
+                        .Get<string[]>() ?? Array.Empty<string>();
+
+                var allowedOrigins = configuredOrigins.Length > 0
+                    ? configuredOrigins
+                    : new[]
+                    {
                         "http://localhost:5173",
-                        "http://127.0.0.1:5173")
+                        "http://127.0.0.1:5173"
+                    };
+
+                policy
+                    .WithOrigins(allowedOrigins)
                     .AllowAnyHeader()
                     .AllowAnyMethod();
             });
