@@ -1,13 +1,12 @@
-name: CI
+name: CD
 
 on:
   push:
     branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
+  workflow_dispatch:
 
 jobs:
-  build-and-test:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -26,11 +25,26 @@ jobs:
         run: dotnet build ./HealthTrack.sln -c Release --no-restore
 
       - name: Test
-        run: dotnet test ./HealthTrack.sln -c Release --no-build --logger "trx;LogFileName=test-results.trx"
+        run: dotnet test ./HealthTrack.sln -c Release --no-build
 
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
+      - name: Azure Login
+        uses: azure/login@v2
         with:
-          name: test-results
-          path: '**/TestResults/*.trx'
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: ACR Login
+        run: az acr login -n ${{ secrets.ACR_NAME }}
+
+      - name: Build & Push API Image
+        run: |
+          IMAGE="${{ secrets.ACR_LOGIN_SERVER }}/healthtrack-api:${GITHUB_SHA}"
+          docker build -f HealthTrack.Api/Dockerfile -t "$IMAGE" .
+          docker push "$IMAGE"
+          echo "API_IMAGE=$IMAGE" >> $GITHUB_ENV
+
+      - name: Deploy API (Azure Container Apps)
+        run: |
+          az containerapp update \
+            -g "${{ secrets.AZURE_RESOURCE_GROUP }}" \
+            -n "${{ secrets.ACA_API_NAME }}" \
+            --image "$API_IMAGE"
